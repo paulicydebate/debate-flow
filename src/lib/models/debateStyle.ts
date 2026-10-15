@@ -64,6 +64,7 @@ export type DebateStyleFlow = {
 	columns: string[];
 	columnsSwitch?: string[];
 	invert: boolean;
+	columnSecondary?: boolean[];
 	starterBoxes?: string[];
 };
 export type DebateStyle = {
@@ -551,13 +552,15 @@ export const debateStyles: {
 		flows: [
 			{
 				name: 'pro',
-				columns: ['1PC', '1OC', '2PC', '2OC/OR', 'PR'],
-				invert: false
+				columns: ['1PC', '1OC', '2PC', '2OC', 'OR', 'PR'],
+				invert: false,
+				columnSecondary: [false, true, false, true, true, false]
 			},
 			{
 				name: 'opp',
-				columns: ['1OC', '2PC', '2OC/OR', 'PR'],
-				invert: true
+				columns: ['1OC', '2PC', '2OC', 'OR', 'PR'],
+				invert: true,
+				columnSecondary: [true, false, true, true, false]
 			}
 		],
 		timerSpeeches: [

@@ -69,7 +69,16 @@ export type Flow = {
 
 	invert: boolean;
 	columns: string[];
+	// which side gave each column's speech (true = the side shown in the secondary color)
+	// only needed when the same side speaks twice in a row, otherwise colors alternate
+	columnSecondary?: boolean[];
 };
+
+export function isColumnSecondary(flow: Flow, index: number): boolean {
+	const explicit = flow.columnSecondary?.[index];
+	if (explicit != null) return explicit;
+	return (index % 2 == 1) != flow.invert;
+}
 
 export type SelfIdFor<T> = T extends Root
 	? RootId

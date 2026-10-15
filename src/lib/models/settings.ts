@@ -703,6 +703,13 @@ export const settings: Settings = new Settings({
 		type: 'toggle',
 		info: 'Reload for these changes to take effect'
 	},
+	spreadsheetEnter: {
+		name: 'Pressing enter on a blank cell moves to the next argument',
+		value: true,
+		auto: true,
+		type: 'toggle',
+		info: 'Lets you press enter to line up responses, like in a spreadsheet. Reload for these changes to take effect'
+	},
 	tabReturnsToParent: {
 		name: 'Pressing tab returns to parent on overrun',
 		value: false,
@@ -812,5 +819,8 @@ export const settingsGroups: SettingsGroup[] = [
 		name: 'Scrollbars',
 		settings: ['customScrollbar', 'customScrollbarWidth']
 	},
-	{ name: 'Controls', settings: ['consistentEnterBehaviour', 'tabReturnsToParent'] }
+	{
+		name: 'Controls',
+		settings: ['consistentEnterBehaviour', 'spreadsheetEnter', 'tabReturnsToParent']
+	}
 ];

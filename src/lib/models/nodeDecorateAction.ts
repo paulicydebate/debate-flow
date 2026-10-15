@@ -133,7 +133,11 @@ export const addNewFlow = decorate(function (
 			tag: 'flow',
 			content: '',
 			invert: style.invert,
-			columns
+			columns,
+			// columnSecondary describes style.columns, so it doesn't apply to columnsSwitch
+			...(style.columnSecondary != null && columns == style.columns
+				? { columnSecondary: style.columnSecondary }
+				: {})
 		}
 	};
 	const actionBundle: Action<Flow | Box>[] = [addAction];
@@ -198,6 +202,31 @@ export const deleteBox = decorate(function (nodes: Nodes, id: BoxId) {
 export const deleteFlow = decorate(function (nodes: Nodes, id: FlowId) {
 	const actionBundle = newDeleteAction(nodes, id);
 	return { action: actionBundle, owner: 'root' };
+});
+
+// replaces a blank response with a response to the next argument in the previous column,
+// so pressing enter walks down the flow like rows in a spreadsheet
+export const advanceToNextArgument = decorate(function (
+	nodes: Nodes,
+	id: BoxId,
+	nextArgumentId: BoxId
+) {
+	const flowId = getParentFlowId(nodes, id).unwrap();
+	const actionBundle = newDeleteAction(nodes, id);
+	const nextArgument = getNode(nodes, nextArgumentId).unwrap();
+	// responses go after the extension if there is one
+	const firstChild = nextArgument.children[0];
+	const responseIndex = firstChild != null && nodes[firstChild]?.value.isExtension ? 1 : 0;
+	let focus: BoxId;
+	if (nextArgument.children.length > responseIndex) {
+		// already responded to, so go to the existing response instead of adding another
+		focus = nextArgument.children[responseIndex];
+	} else {
+		const addAction = newBoxAction(nextArgumentId, flowId, responseIndex);
+		actionBundle.push(addAction);
+		focus = addAction.id as BoxId;
+	}
+	return { action: actionBundle, owner: flowId, ret: focus };
 });
 
 export const moveFlow = decorate(function (nodes: Nodes, id: FlowId, newIndex: number) {

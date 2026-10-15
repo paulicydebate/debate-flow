@@ -6,6 +6,7 @@ import {
 	newFlowId,
 	newBoxId,
 	getNode,
+	isColumnSecondary,
 } from "./node";
 import type { OldBox, OldFlows } from "./oldType";
 import { newNodes, sideDocText } from "./store";
@@ -177,10 +178,7 @@ export function downloadXlsx(nodes: Nodes, sideDocText: string) {
 				// darker red
 				let border = "FFFF9999";
 
-				if (
-					(x % 2 == 0 && !getNode(nodes, flowId).unwrap().value.invert) ||
-					(x % 2 == 1 && getNode(nodes, flowId).unwrap().value.invert)
-				) {
+				if (!isColumnSecondary(getNode(nodes, flowId).unwrap().value, x)) {
 					// light blue
 					fill = "FFCCE5FF";
 					// darker blue

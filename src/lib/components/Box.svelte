@@ -23,6 +23,7 @@
 	import {
 		addNewBox,
 		addNewExtension,
+		advanceToNextArgument,
 		deleteBox,
 		newUpdateAction,
 		toggleBoxFormat
@@ -37,6 +38,7 @@
 
 	let consistentEnterBehaviour: boolean = settings.data['consistentEnterBehaviour']
 		.value as boolean;
+	let spreadsheetEnter: boolean = settings.data['spreadsheetEnter'].value as boolean;
 	let tabReturnsToParent: boolean = settings.data['tabReturnsToParent'].value as boolean;
 
 	let node: Node<Box | Flow>;
@@ -84,6 +86,8 @@
 
 	const getInvert: () => boolean = getContext('invert');
 	let invert: boolean = getInvert();
+
+	const getIsColumnSecondary: (index: number) => boolean = getContext('isColumnSecondary');
 
 	const getColumnCount: () => number = getContext('columnCount');
 	let columnCount: number = getColumnCount();
@@ -234,6 +238,7 @@
 		none: {
 			Enter: {
 				handle: () => {
+					if (spreadsheetEnter && enterOnBlank()) return;
 					if (consistentEnterBehaviour) {
 						if (addSibling(index(), 1)) {
 							focusSibling(index(), 1);
@@ -318,6 +323,40 @@
 		if (boxId == null) return;
 		toggleBoxFormat(boxId, format);
 		updateNodeData();
+	}
+
+	// pressing enter on a blank cell moves down instead of piling up more blank cells,
+	// so responses can be lined up with arguments like in a spreadsheet
+	// returns false if this isn't a blank cell, so enter should behave normally
+	function enterOnBlank(): boolean {
+		if (box == null || box.isExtension || box.empty) return false;
+		if ((content?.length ?? 1) != 0 || node.children.length != 0) return false;
+		const boxId = checkIdBox($nodes, id);
+		if (boxId == null) return false;
+
+		const parentId = checkIdBox($nodes, node.parent);
+		if (parentId == null) {
+			// first column: go to the next argument if there is one, otherwise keep this blank cell
+			blurSelf();
+			if (!focusSiblingStrict(index(), 1)) focusSelf();
+			return true;
+		}
+
+		// find the next argument in the previous column, skipping placeholders
+		let nextArgumentId = getAdjacentBox($nodes, parentId, 'down');
+		while (nextArgumentId != null && $nodes[nextArgumentId]?.value.empty) {
+			nextArgumentId = getAdjacentBox($nodes, nextArgumentId, 'down');
+		}
+		if (nextArgumentId == null) {
+			// nothing left to line up with, so keep this blank cell
+			focusSelf();
+			return true;
+		}
+
+		blurSelf();
+		$focusId = advanceToNextArgument(boxId, nextArgumentId);
+		history.setPrevAfterFocus($focusId);
+		return true;
 	}
 
 	function addChild(childIndex: number, direction: number): boolean {
@@ -496,8 +535,12 @@
 	let palette: string;
 	let outsidePalette: string;
 	$: {
-		let isEvenLevel = node.level % 2 == 0;
-		let invertColor = isEvenLevel !== invert;
+		let invertColor;
+		if (node.level >= 1) {
+			invertColor = getIsColumnSecondary(node.level - 1);
+		} else {
+			invertColor = (node.level % 2 == 0) !== invert;
+		}
 
 		palette = invertColor ? 'accent-secondary' : 'accent';
 		outsidePalette = invertColor ? 'accent' : 'accent-secondary';

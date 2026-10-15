@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Box from './Box.svelte';
 	import Header from './Header.svelte';
-	import type { FlowId, Node, Flow } from '../models/node';
+	import { type FlowId, type Node, type Flow, isColumnSecondary } from '../models/node';
 
 	import { setContext } from 'svelte';
 	import { focusId } from '$lib/models/focus';
@@ -22,6 +22,9 @@
 
 	setContext('invert', () => {
 		return flow.invert;
+	});
+	setContext('isColumnSecondary', (index: number) => {
+		return isColumnSecondary(flow, index);
 	});
 	setContext('columnCount', () => {
 		return flow.columns.length;
@@ -52,7 +55,7 @@
 		<div class="headers">
 			{#each flow.columns as column, index}
 				<div
-					class={`header palette-${!!(index % 2) == flow.invert ? 'accent' : 'accent-secondary'}`}
+					class={`header palette-${isColumnSecondary(flow, index) ? 'accent-secondary' : 'accent'}`}
 				>
 					<Header {column} on:focusFlow addEmpty={() => addEmpty(index)} />
 				</div>
@@ -61,7 +64,7 @@
 		<div class="columns">
 			{#each flow.columns as col, index}
 				<div
-					class={`column palette-${!!(index % 2) == flow.invert ? 'plain' : 'plain-secondary'}`}
+					class={`column palette-${isColumnSecondary(flow, index) ? 'plain-secondary' : 'plain'}`}
 				/>
 			{/each}
 		</div>
